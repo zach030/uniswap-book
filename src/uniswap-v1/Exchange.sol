@@ -1,25 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IFactory} from "./Interface.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Exchange {
-    bytes32 public name;
-    bytes32 public symbol;
-    uint256 public decimals;
-    address public token;
-    IFactory public factory;
+    address public tokenAddress;
 
-    constructor() {
-        
+    constructor(address _token) {
+        require(_token != address(0), "invalid token address");
+        tokenAddress = _token;
     }
 
-    function setup(address tokenAddr) public{
-        require(address(factory)==address(0) && token==address(0), "");
-        factory = IFactory(msg.sender);
-        token = tokenAddr;
-        name = 0x556e697377617020563100000000000000000000000000000000000000000000;
-        symbol = 0x554e492d56310000000000000000000000000000000000000000000000000000;
-        decimals = 18;
+    function addLiquidity(uint256 tokenAmount) public payable{
+        // require msg.value
+        IERC20 token = IERC20(tokenAddress);
+        token.transferFrom(msg.sender, address(this), tokenAmount);
+    }
+
+    function getReserve() public view returns(uint256){
+        return IERC20(tokenAddress).balanceOf(address(this));
     }
 }
