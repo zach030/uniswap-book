@@ -17,15 +17,14 @@ contract ExchangeTest is Test {
 
     function testaddLiquidity() public {
         token.approve(address(exchange), 1000);
-        exchange.addLiquidity{value: 1 ether}(1000);
+        exchange.addLiquidity{value: 1000 wei}(1000);
     }
 
     function testgetPrice() public {
-        token.approve(address(exchange), 1e18);
-        exchange.addLiquidity{value: 1 ether}(1e18);
-        uint256 tokenReserve = exchange.getReserve();
-        uint256 tokenPrice = exchange.getPrice(address(exchange).balance, tokenReserve);
-        assertEq(tokenPrice, 1);
+        token.approve(address(exchange), 1000);
+        exchange.addLiquidity{value: 1000 wei}(1000);
+        uint256 tokenBorrow = exchange.getTokenAmount(100);
+        console.log(tokenBorrow);
+        assertLe(tokenBorrow, 1 wei);
     }
-
 }
