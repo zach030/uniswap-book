@@ -10,7 +10,8 @@ contract ExchangeTest is Test {
     Exchange public exchange;
     ERC20 public lp;
     Token token;
-
+    address player = makeAddr('player');
+    receive() external payable{}
     function setUp() public {
         token = new Token("uni", "u", 1e18);
         exchange = new Exchange(address(token));
@@ -30,5 +31,36 @@ contract ExchangeTest is Test {
         exchange.addLiquidity{value: 1000 wei}(1000);
         uint256 tokenBorrow = exchange.getTokenAmount(100);
         assertLe(tokenBorrow, 1000 wei);
+    }
+    
+    function testethToTokenSwap() public {
+        token.approve(address(exchange), 1000);
+        exchange.addLiquidity{value :100 wei}(200); 
+        vm.startPrank(player);
+        vm.deal(player, 15 wei);
+        exchange.ethToTokenSwap{value: 10 wei}(0);
+        uint256 tokenBalance = token.balanceOf(address(player));
+        assertLe(tokenBalance , 20);
+        vm.stopPrank();
+    }
+
+    function testImplermanentLoss() public{
+        token.approve(address(exchange), 1000);
+        exchange.addLiquidity{value :100 wei}(200); 
+
+        vm.startPrank(player);
+        vm.deal(player, 15 wei);
+        
+        exchange.ethToTokenSwap{value: 10 wei}(0);
+        uint256 tokenBalance = token.balanceOf(address(player));
+        assertLe(tokenBalance , 20);
+        
+        vm.stopPrank();
+        
+        uint256 ethAmount;
+        uint256 tokenAmount;
+        (ethAmount, tokenAmount) = exchange.removeLiquidity(100);
+        assertGe(ethAmount, 100 wei);
+        assertLe(tokenAmount, 200);
     }
 }
