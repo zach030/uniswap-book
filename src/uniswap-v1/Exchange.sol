@@ -74,10 +74,10 @@ contract Exchange is ERC20 {
 
     function ethToTokenSwap(uint256 _minTokens) public payable {
         uint256 tokenReserve = getReserve();
-        uint256 inputReserve = msg.value;
+        uint256 inputAmount = msg.value;
         uint256 ethReserve = address(this).balance - msg.value;
         uint256 outputTokenAmount = getAmount(
-            inputReserve,
+            inputAmount,
             ethReserve,
             tokenReserve
         );
