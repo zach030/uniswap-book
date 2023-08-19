@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "forge-std/StdUtils.sol";
 import "../../src/uniswap-v1/Exchange.sol";
+import "../../src/uniswap-v1/Factory.sol";
 import "../../src/uniswap-v1/Token.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
@@ -11,11 +12,15 @@ contract ExchangeTest is Test {
     Exchange public exchange;
     ERC20 public lp;
     Token token;
+    Factory factory;
     address player = makeAddr('player');
     receive() external payable{}
+    
     function setUp() public {
+        factory = new Factory();
         token = new Token("uni", "u", 1e18);
-        exchange = new Exchange(address(token));
+        address exchangeAddress = factory.createExchange(address(token));
+        exchange = Exchange(exchangeAddress);
         lp = ERC20(address(exchange));
         token.approve(address(exchange), 1e18);
     }
@@ -89,10 +94,29 @@ contract ExchangeTest is Test {
         // lp remove liquidity
         vm.startPrank(lpUser);
         uint256 lpAmount = lp.balanceOf(lpUser);
-        (uint256 ethAmount, uint256 tokenAmount) = exchange.removeLiquidity(lpAmount);
+        exchange.removeLiquidity(lpAmount);
         vm.stopPrank();
         console.log("lp token balance:", token.balanceOf(lpUser));
         console.log("lp eth balance:", address(lpUser).balance);    
         // 0.5 ether + 200 token = 400*0.5 + 200 = 400u 
+    }
+
+    function testtokenToTokenSwap() public {
+        Token tt = new Token("t", "tt", 1e18);
+        address exchange2Address = factory.createExchange(address(tt));
+        Exchange exchange2 = Exchange(exchange2Address);
+        tt.approve(address(exchange2), 2000);
+        exchange2.addLiquidity{value: 1000 wei}(2000);
+        // exchange: token-eth; exchange2: tt-eth
+        token.approve(address(exchange), 1000);
+        exchange.addLiquidity{value: 1000 wei}(1000);
+        // swap token to tt
+        vm.startPrank(player);
+        deal(address(token), player, 1000);
+        token.approve(address(exchange), 100);
+        exchange.tokenToTokenSwap(100, 1, address(tt));
+        vm.stopPrank();
+
+        assertGe(tt.balanceOf(player), 0);
     }
 }
