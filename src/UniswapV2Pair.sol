@@ -10,6 +10,8 @@ interface IERC20 {
     function transfer(address to, uint256 amount) external;
 }
 
+error InsufficientLiquidityMinted();
+
 contract UniswapV2Pair is ERC20, Math{
     uint256 constant MINIMUM_LIQUIDITY = 1000;
     address public token0;
@@ -17,6 +19,10 @@ contract UniswapV2Pair is ERC20, Math{
 
     uint256 private reserve0;
     uint256 private reserve1;
+
+    event Burn(address indexed sender, uint256 amount0, uint256 amount1);
+    event Mint(address indexed sender, uint256 amount0, uint256 amount1);
+    event Sync(uint256 reserve0, uint256 reserve1);
 
     constructor(address token0_, address token1_) 
         ERC20("","",18)
@@ -43,8 +49,10 @@ contract UniswapV2Pair is ERC20, Math{
             );
         }
         if (liquidity <= 0){
-            revert("");
+            revert InsufficientLiquidityMinted();
         }
         _mint(msg.sender, liquidity);
+
+        emit Mint(msg.sender, amount0, amount1);
     }
 }
